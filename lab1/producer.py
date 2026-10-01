@@ -27,7 +27,6 @@ def process(req: ProcessRequest):
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
-    # pika connections aren't thread-safe, so use one per request (fine for a lab)
     conn = get_connection()
     ch = conn.channel()
     declare_topology(ch)
@@ -36,7 +35,7 @@ def process(req: ProcessRequest):
         routing_key=QUEUE,
         body=json.dumps(msg),
         properties=pika.BasicProperties(
-            delivery_mode=2,                 # persistent
+            delivery_mode=2,                
             content_type="application/json",
             headers={"x-retries": 0},
         ),

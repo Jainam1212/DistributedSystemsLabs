@@ -20,7 +20,6 @@ def declare_topology(ch):
     ch.queue_declare(queue=DLQ, durable=True)
     ch.queue_bind(queue=DLQ, exchange=DLX, routing_key=DLQ_KEY)
 
-    # Main queue: rejected (requeue=False) messages get routed to the DLX
     ch.queue_declare(
         queue=QUEUE,
         durable=True,
