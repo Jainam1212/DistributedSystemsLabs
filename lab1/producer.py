@@ -1,16 +1,13 @@
 import json
 import uuid
 from datetime import datetime, timezone
-
 import pika
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-
 import store
 from queues import QUEUE, declare_topology, get_connection
 
 app = FastAPI()
-
 
 class ProcessRequest(BaseModel):
     text: str
@@ -18,11 +15,11 @@ class ProcessRequest(BaseModel):
 
 @app.post("/process")
 def process(req: ProcessRequest):
-    request_id = str(uuid.uuid4())
-    store.set_result(request_id, "processing")
+    uuId = str(uuid.uuid4())
+    store.set_result(uuId, "processing")
 
-    msg = {
-        "id": request_id,
+    queueMsg = {
+        "id": uuId,
         "text": req.text,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
@@ -33,7 +30,7 @@ def process(req: ProcessRequest):
     ch.basic_publish(
         exchange="",
         routing_key=QUEUE,
-        body=json.dumps(msg),
+        body=json.dumps(queueMsg),
         properties=pika.BasicProperties(
             delivery_mode=2,                
             content_type="application/json",
@@ -41,11 +38,11 @@ def process(req: ProcessRequest):
         ),
     )
     conn.close()
-    return {"id": request_id}
+    return {"id": uuId}
 
 
 @app.get("/result/{id}")
-def get_result(id: str):
+def getResult(id: str):
     r = store.get_result(id)
     if r is None:
         raise HTTPException(status_code=404, detail="unknown id")

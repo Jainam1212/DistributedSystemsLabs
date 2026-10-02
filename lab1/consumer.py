@@ -1,20 +1,20 @@
 import json
 import os
 import time
-
+from dotenv import load_dotenv
 import pika
 import requests
-
 import store
 from queues import MAX_RETRIES, QUEUE, declare_topology, get_connection
 
+load_dotenv()
 
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
-MODEL = os.getenv("MODEL", "llama3.2:1b")
+OLLAMA_URL = os.getenv("OLLAMA_URL")
+MODEL = os.getenv("MODEL")
 DEMO_DELAY = float(os.getenv("DEMO_DELAY", "0"))
 
 
-def call_ai(text):
+def aiApi(text):
     r = requests.post(
         OLLAMA_URL,
         json={"model": MODEL, "prompt": text, "stream": False},
@@ -39,7 +39,7 @@ def on_message(ch, method, props, body):
     try:
         if DEMO_DELAY:
             time.sleep(DEMO_DELAY)
-        result = call_ai(text)
+        result = aiApi(text)
         store.set_result(msg_id, "completed", result=result)
         ch.basic_ack(method.delivery_tag)
         print(f"[DONE] id={msg_id}")

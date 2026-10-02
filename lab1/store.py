@@ -9,30 +9,25 @@ DB_CONFIG = {
 }
 
 
-def _conn():
+def sqlConn():
     c = mysql.connector.connect(**DB_CONFIG)
-
     cursor = c.cursor()
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS results (
-            id VARCHAR(255) PRIMARY KEY,
-            status VARCHAR(50),
-            result TEXT,
-            error TEXT
-        )
-        """
-    )
+
+    with open("./migration/001.sql", "r") as file:
+        sql = file.read()
+    for sql_cmd in sql.split(";"):
+        sql_cmd = sql_cmd.strip()
+        if sql_cmd:
+            cursor.execute(sql_cmd)
+    c.commit()
     cursor.close()
 
     return c
 
 
 def set_result(id, status, result=None, error=None):
-    c = _conn()
-
+    c = sqlConn()
     cursor = c.cursor()
-
     cursor.execute(
         """
         INSERT INTO results (id, status, result, error)
@@ -51,7 +46,7 @@ def set_result(id, status, result=None, error=None):
 
 
 def get_result(id):
-    c = _conn()
+    c = sqlConn()
 
     cursor = c.cursor()
 
@@ -61,7 +56,7 @@ def get_result(id):
         FROM results
         WHERE id = %s
         """,
-        (id,),
+        (id),
     )
 
     row = cursor.fetchone()
